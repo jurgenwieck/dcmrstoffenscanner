@@ -1,0 +1,23 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Project Guidelines
+
+## Project Requirements Document (PRD)
+
+- Always consult the PRD file [prd.md](mdc:prd.md) at the root of the project
+- When implementing features, ensure they align with the specifications in the PRD
+- If you need to make changes to the codebase that would affect requirements, update the PRD accordingly
+- The PRD is the source of truth for project requirements and should be kept up to date
+
+## Task Management
+
+- Keep the [tasks.md](mdc:tasks.md) file at the root of the project up to date with project progress
+- Mark completed tasks with `- [x]` checkmarks in markdown
+- Leave pending tasks as `- [ ]` 
+- Add new tasks when features expand
+- Organize tasks under appropriate version sections
+- Create subtasks for complex features
+- Update task status after implementing features

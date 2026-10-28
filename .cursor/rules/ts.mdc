@@ -1,0 +1,161 @@
+---
+description: TypeScript
+globs: *.ts
+alwaysApply: false
+---
+This comprehensive guide outlines best practices when using TypeScript with conventions and standards for development with modern web technologies like Vue 3, Nuxt UI, Pinia, FontAwesome, VueUse, and Tailwind.
+
+Development Philosophy
+  - Write clean, maintainable, and scalable code
+  - Follow SOLID principles
+  - Prefer functional and declarative programming patterns over imperative
+  - Emphasize type safety and static analysis
+  - Practice component-driven development
+
+Naming Conventions
+General Rules
+  - Use PascalCase for:
+    - Components
+    - Type definitions
+    - Interfaces
+  - Use camelCase for:
+    - Variables
+    - Functions
+    - Methods
+    - Properties
+    - Props
+  - Use UPPERCASE for:
+    - Enums
+    - Environment variables
+    - Constants
+    - Global configurations
+  - Avoid the use of try catch blocks
+  - Always put interfaces in an interface folder, eg. never put them in-line
+
+Specific Naming Patterns
+  - Prefix event handlers with 'handle': handleClick, handleSubmit
+  - Prefix boolean variables with verbs: isLoading, hasError, canSubmit
+  - Prefix custom hooks with 'use': useAuth, useForm
+  - Use complete words over abbreviations except for:
+    - err (error)
+    - req (request)
+    - res (response)
+    - props (properties)
+    - ref (reference)
+
+TypeScript Implementation
+  - Enable strict mode
+  - Define clear interfaces for component props, state, and Pinia state structure.
+  - Use type guards to handle potential undefined or null values safely.
+  - Apply generics to functions, actions, and slices where type flexibility is needed.
+  - Utilize TypeScript utility types (Partial, Pick, Omit) for cleaner and reusable code.
+  - Prefer interface over type for defining object structures, especially when extending.
+  - Use mapped types for creating variations of existing types dynamically.
+
+State Management
+
+Global State
+  - Use Pinia for global state
+  - Use `defineStore('entity', {state, actions})` way of defining a store
+
+Error Handling and Validation
+Form Validation
+  - Use Zod for schema validation
+  - Implement proper error messages
+  - Use proper form libraries (e.g., NuxtUI Form)
+
+Error Boundaries
+  - Log caught errors to an external service (e.g., Bugsnag) for tracking and debugging.
+  - Design user-friendly fallback UIs to display when errors occur, keeping users informed without breaking the app.
+
+Internationalization (i18n)
+  - Use vue-i18n for translations
+  - Implement proper locale detection
+  - Use proper number and date formatting
+  - Use proper currency formatting
+
+Below are some examples of data flow that you should follow. The examples are named "entity" but this can be anything, users, items etc:
+
+- We start by using or creating an interface, `./src/shared/interfaces/Entity.ts`
+    ```ts
+    export interface Entity {
+        id: number;
+        name: string;
+    }
+    ```
+- Then we should have A global pinia store, `./src/stores/entity.ts`
+    ```ts
+    import { http } from '@/shared/helpers/httpHelper'
+    import { defineStore } from 'pinia'
+    import * as toast from '@/shared/helpers/useToast'
+    import type { Entity } from '@/shared/interfaces/Entity';
+
+    interface EntityState {
+        entities: Entity[];
+        entitiesLoading: boolean;
+        entity: Entity | null;
+        entityLoading: boolean;
+    }
+        
+    const initialState = (): EntityState => ({
+        entities: [],
+        entitiesLoading: false,
+        entity: null,
+        entityLoading: false,
+    });
+
+    export const useEntityStore = defineStore('entity', {
+        state: () => (initialState()),
+        actions: {
+            async getEntities() {
+                this.entitiesLoading = true;
+                const { data, error } = await http<{data: Entity[]}>({
+                    url: '/entities',
+                    method: 'get',
+                });
+
+                if (error) {
+                    this.entitiesLoading = false;
+                    toast.error('Error', error?.message || 'Something went wrong getting the entities');
+                    return;
+                }
+
+                this.entities = data.data;
+                this.entitiesLoading = false;
+            },
+
+            async getEntity(id: number) {
+                this.entityLoading = true;
+                const { data, error } = await http<{data: Entity}>({
+                    url: `/entities/${id}`,
+                    method: 'get',
+                });
+
+                if (error) {
+                    this.entityLoading = false;
+                    toast.error('Error', error?.message || 'Something went wrong getting the entity');
+                    return;
+                }
+
+                this.entity = data.data;
+                this.entityLoading = false;
+            },
+
+            async deleteEntity(id: number) {
+                const { error } = await http<{data: Entity}>({
+                    url: `/entities/${id}`,
+                    method: 'delete'
+                });
+
+                if (error) {
+                    toast.error('Error', error?.message || 'Something went wrong deleting the entity');
+                    return;
+                }
+
+                this.entities = this.entities.filter(entity => entity.id !== id);
+                this.entity = null;
+                toast.success('Success', 'The entity has been successfully deleted');
+            },
+        },
+    });
+    ```

@@ -1,0 +1,101 @@
+---
+description: Vue
+globs: *.vue
+alwaysApply: false
+---
+You are an expert in TypeScript, Vue 3, Nuxt UI, Pinia, FontAwesome, VueUse, and Tailwind.
+
+Code Style and Structure
+- Write concise, technical TypeScript code with accurate examples.
+- Use composition API and declarative programming patterns; never use options API.
+- Prefer iteration and modularization over code duplication.
+- Use descriptive variable names with auxiliary verbs (e.g., isLoading, hasError).
+- Structure files: exported component, composables, pinia stores, helpers, interfaces, types.
+- Prefer using global pinia store.
+
+Naming Conventions
+- Use lowercase with dashes for directories (e.g., components/auth-wizard).
+- Use PascalCase for component names (e.g., AuthWizard.vue).
+- Use camelCase for composables (e.g., useAuthState.ts).
+- Use camelCase for stores (e.g., authStore.ts).
+
+TypeScript Usage
+- Use TypeScript for all code.
+- Use Vue 3 with TypeScript, leveraging defineComponent and PropType.
+- Prefer await, catch and throw over try catch
+
+Syntax and Formatting
+- Use arrow functions for methods and computed properties.
+- Avoid unnecessary curly braces in conditionals; use concise syntax for simple statements.
+- Use template syntax for declarative rendering.
+
+UI and Styling
+- Use NuxtUI Vue, and Tailwind for components and styling. We DO NOT USE NUXT ITSELF only Nuxt UI.
+- Implement responsive design with Tailwind CSS; use a mobile-first approach.
+- When using icons always use FontAwesome.
+- Use the `<FaIcon />` component for icons, for example <FaIcon class="h-3" :icon="faSearch" /> where `faSearch` comes from `import { faSearch } from '@fortawesome/pro-regular-svg-icons';`
+- Only use the follwing 9 styles `@fortawesome/duotone-light-svg-icons`, `@fortawesome/duotone-regular-svg-icons`, `@fortawesome/duotone-thin-svg-icons`, `@fortawesome/free-brands-svg-icons`, `@fortawesome/pro-duotone-svg-icons`, `@fortawesome/pro-light-svg-icons`, `@fortawesome/pro-regular-svg-icons`, `@fortawesome/pro-solid-svg-icons` and `@fortawesome/pro-thin-svg-icons`. Generally use `solid` or `regular` styles for smaller icons, and larger icons can use any of the styles but `duotone-regular` is generally used.
+
+NuxtUI specific  
+- When using the @Table component make sure you:
+    - check if the `const columns: [] = [...]` for use in the `<UTable ... :columns="columns" ...>` always uses the imported type `import type { TableColumn } from '@nuxt/ui'` so: `const columns: TableColumn<SomeEntity>[] = [...]`
+    - Always prefer @slots over the @`h()` render funciton in `const columns: TableColumn<Payment>[] = [...]` so for example when using @`h()` row actions use:
+    ```vue
+    <template #action-cell="{ row }">
+        <UDropdownMenu :items="getDropdownActions(row.original)">
+            <UButton
+                icon="i-lucide-ellipsis-vertical"
+                color="neutral"
+                variant="ghost"
+                aria-label="Actions"
+            />
+        </UDropdownMenu>
+    </template>
+    ```
+    instead of:
+    ```ts
+    const columns: TableColumn<Payment>[] = [
+        ...
+        {
+            id: 'actions',
+            cell: ({ row }) => {
+                return h(
+                    'div',
+                    { class: 'text-right' },
+                    h(
+                        UDropdownMenu,
+                        {
+                            content: {
+                                align: 'end'
+                            },
+                            items: getRowItems(row),
+                            'aria-label': 'Actions dropdown'
+                        },
+                        () => h(UButton, {
+                            icon: 'i-lucide-ellipsis-vertical',
+                            color: 'neutral',
+                            variant: 'ghost',
+                            class: 'ml-auto',
+                            'aria-label': 'Actions dropdown'
+                        })
+                    )
+                )
+            }
+        }
+    ]
+    ```
+
+Key Conventions
+- Use VueUse for common composables and utility functions.
+- Use Pinia for state management.
+
+Vue 3 and Composition API Best Practices
+- Vue components have the following order <template> <script>.
+- Prefer not to use <style> but instead use tailwind classes.
+- Use <script setup> syntax for concise component definitions.
+- Always prefer ref over reactive.
+- Leverage ref, and computed for reactive state management.
+- Prever using global pinia store over provide/inject.
+- Implement custom composables for reusable logic.
+
+Follow the official Vue.js documentation for up-to-date best practices on Data Fetching, Rendering, and Routing.

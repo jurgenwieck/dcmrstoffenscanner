@@ -1,0 +1,113 @@
+{
+  "definition": {
+    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "foundryAgentEndpoint": {
+        "type": "String"
+      },
+      "foundryAgentId": {
+        "type": "String"
+      },
+      "foundryApiVersion": {
+        "type": "String",
+        "defaultValue": "2025-05-01"
+      }
+    },
+    "triggers": {
+      "When_a_HTTP_request_is_received": {
+        "type": "Request",
+        "kind": "Http",
+        "inputs": {
+          "schema": {
+            "type": "object",
+            "required": ["fileName", "contentType", "imageBase64"],
+            "properties": {
+              "fileName": {
+                "type": "string"
+              },
+              "contentType": {
+                "type": "string"
+              },
+              "imageBase64": {
+                "type": "string"
+              },
+              "inspectionId": {
+                "type": "string"
+              },
+              "photoId": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "actions": {
+      "Call_Azure_AI_Foundry_Agent": {
+        "type": "Http",
+        "inputs": {
+          "method": "POST",
+          "uri": "@{parameters('foundryAgentEndpoint')}/agents/@{parameters('foundryAgentId')}/analyze?api-version=@{parameters('foundryApiVersion')}",
+          "authentication": {
+            "type": "ManagedServiceIdentity"
+          },
+          "headers": {
+            "Content-Type": "application/json"
+          },
+          "body": {
+            "fileName": "@triggerBody()?['fileName']",
+            "contentType": "@triggerBody()?['contentType']",
+            "imageBase64": "@triggerBody()?['imageBase64']",
+            "inspectionId": "@triggerBody()?['inspectionId']",
+            "photoId": "@triggerBody()?['photoId']"
+          }
+        }
+      },
+      "Return_Analysis_Result": {
+        "type": "Response",
+        "runAfter": {
+          "Call_Azure_AI_Foundry_Agent": ["Succeeded"]
+        },
+        "inputs": {
+          "statusCode": 200,
+          "headers": {
+            "Content-Type": "application/json"
+          },
+          "body": {
+            "success": true,
+            "data": "@body('Call_Azure_AI_Foundry_Agent')"
+          }
+        }
+      },
+      "Return_Analysis_Error": {
+        "type": "Response",
+        "runAfter": {
+          "Call_Azure_AI_Foundry_Agent": ["Failed", "TimedOut"]
+        },
+        "inputs": {
+          "statusCode": 502,
+          "headers": {
+            "Content-Type": "application/json"
+          },
+          "body": {
+            "success": false,
+            "error": "Azure AI Foundry analyse is mislukt."
+          }
+        }
+      }
+    },
+    "outputs": {}
+  },
+  "parameters": {
+    "foundryAgentEndpoint": {
+      "value": "https://<your-foundry-project-endpoint>"
+    },
+    "foundryAgentId": {
+      "value": "<your-agent-id>"
+    },
+    "foundryApiVersion": {
+      "value": "2025-05-01"
+    }
+  }
+}

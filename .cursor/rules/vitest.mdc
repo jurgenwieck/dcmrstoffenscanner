@@ -1,0 +1,281 @@
+---
+description: 
+globs: *.spec.ts,*.test.ts
+alwaysApply: false
+---
+Rule Name: vitest
+Description: Vitest Testing Standards for Vue 3 Applications
+
+# Technology Stack
+- Vitest
+- @vue/test-utils
+- @testing-library/vue
+- @vitest/coverage-c8
+- happy-dom (for DOM environment)
+
+# Test File Structure
+```typescript
+tests/
+├── unit/                     // Unit tests
+│   ├── components/           // Component tests
+│   ├── composables/          // Composable tests
+│   ├── stores/              // Pinia store tests
+│   └── utils/               // Utility function tests
+├── integration/             // Integration tests
+└── setup/                   // Test setup files
+    ├── vitest.setup.ts     // Global setup
+    └── test-utils.ts       // Common test utilities
+```
+
+# Naming Conventions
+- Test files: `*.spec.ts` or `*.test.ts`
+  - `UserProfile.spec.ts` for component tests
+  - `useAuth.test.ts` for composable tests
+- Test utility files: `*-utils.ts`
+- Test setup files: `*.setup.ts`
+
+# Component Test Structure
+```typescript
+import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { mount } from '@vue/test-utils'
+import { createTestingPinia } from '@pinia/testing'
+import UserProfile from '@/components/UserProfile.vue'
+import type { User } from '@/types'
+
+describe('UserProfile.vue', () => {
+  // 1. Test setup
+  const mockUser: User = {
+    id: 1,
+    name: 'John Doe',
+    email: 'john@example.com'
+  }
+
+  // 2. Common setup function
+  const mountComponent = (props = {}) => {
+    return mount(UserProfile, {
+      props: {
+        user: mockUser,
+        ...props
+      },
+      global: {
+        plugins: [
+          createTestingPinia({
+            createSpy: vi.fn
+          })
+        ]
+      }
+    })
+  }
+
+  // 3. Tests grouped by feature/behavior
+  describe('rendering', () => {
+    it('displays user information correctly', () => {
+      const wrapper = mountComponent()
+      expect(wrapper.text()).toContain('John Doe')
+      expect(wrapper.text()).toContain('john@example.com')
+    })
+
+    it('handles loading state', () => {
+      const wrapper = mountComponent({ isLoading: true })
+      expect(wrapper.find('[data-test="skeleton"]').exists()).toBe(true)
+    })
+  })
+
+  describe('user interactions', () => {
+    it('emits update event when form is submitted', async () => {
+      const wrapper = mountComponent()
+      await wrapper.find('form').trigger('submit')
+      expect(wrapper.emitted('update')).toBeTruthy()
+    })
+  })
+})
+```
+
+# Composable Test Structure
+```typescript
+import { describe, it, expect, beforeEach } from 'vitest'
+import { useUserState } from '@/composables/useUserState'
+import { ref } from 'vue'
+
+describe('useUserState', () => {
+  // 1. Setup
+  beforeEach(() => {
+    // Reset any global state
+  })
+
+  // 2. Tests
+  it('should handle state changes', () => {
+    const { user, updateUser } = useUserState()
+    updateUser({ id: 1, name: 'John' })
+    expect(user.value).toEqual({ id: 1, name: 'John' })
+  })
+})
+```
+
+# Store Test Structure
+```typescript
+import { setActivePinia, createPinia } from 'pinia'
+import { useUserStore } from '@/stores/userStore'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
+
+describe('UserStore', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+  })
+
+  it('fetches user successfully', async () => {
+    const store = useUserStore()
+    await store.fetchUser(1)
+    expect(store.user).toBeTruthy()
+  })
+})
+```
+
+# Best Practices
+
+## 1. Test Organization
+- Group related tests using `describe` blocks
+- Use clear, descriptive test names
+- Follow AAA pattern (Arrange, Act, Assert)
+- Keep tests focused and atomic
+
+## 2. Mocking
+```typescript
+// Mock API calls
+vi.mock('@/api', () => ({
+  default: {
+    get: vi.fn()
+  }
+}))
+
+// Mock composables
+vi.mock('@/composables/useAuth', () => ({
+  useAuth: () => ({
+    isAuthenticated: ref(true),
+    user: ref({ id: 1 })
+  })
+}))
+```
+
+## 3. Testing Patterns
+- Test component rendering
+- Test user interactions
+- Test error states
+- Test loading states
+- Test edge cases
+- Test accessibility
+
+## 4. Common Test Utilities
+```typescript
+// test-utils.ts
+export const createWrapper = (component, options = {}) => {
+  return mount(component, {
+    global: {
+      plugins: [createTestingPinia()],
+      stubs: {
+        'font-awesome-icon': true
+      },
+      ...options.global
+    },
+    ...options
+  })
+}
+```
+
+# Testing Guidelines
+
+## 1. Component Testing
+- Test props handling
+- Test events emission
+- Test slots rendering
+- Test conditional rendering
+- Test user interactions
+- Test error states
+
+## 2. Composable Testing
+- Test state management
+- Test side effects
+- Test error handling
+- Test cleanup/disposal
+
+## 3. Store Testing
+- Test initial state
+- Test mutations/actions
+- Test getters
+- Test async operations
+- Test error handling
+
+## 4. Coverage Requirements
+- Maintain minimum 80% coverage
+- 100% coverage for critical paths
+- Track coverage trends
+
+# Common Test Patterns
+
+## 1. Async Testing
+```typescript
+it('handles async operations', async () => {
+  const wrapper = mountComponent()
+  await wrapper.vm.$nextTick()
+  await flushPromises()
+  expect(wrapper.text()).toContain('Loaded Data')
+})
+```
+
+## 2. Form Testing
+```typescript
+it('validates form input', async () => {
+  const wrapper = mountComponent()
+  const input = wrapper.find('input[name="email"]')
+  await input.setValue('invalid-email')
+  await wrapper.find('form').trigger('submit')
+  expect(wrapper.text()).toContain('Invalid email')
+})
+```
+
+## 3. Error Testing
+```typescript
+it('displays error message', async () => {
+  const error = new Error('API Error')
+  vi.spyOn(api, 'get').mockRejectedValue(error)
+  const wrapper = mountComponent()
+  await flushPromises()
+  expect(wrapper.text()).toContain('API Error')
+})
+```
+
+# Configuration
+```typescript
+// vitest.config.ts
+import { defineConfig } from 'vitest/config'
+import vue from '@vitejs/plugin-vue'
+
+export default defineConfig({
+  plugins: [vue()],
+  test: {
+    environment: 'happy-dom',
+    coverage: {
+      reporter: ['text', 'json', 'html'],
+      branches: 80,
+      functions: 80,
+      lines: 80,
+      statements: 80
+    },
+    setupFiles: ['./tests/setup/vitest.setup.ts']
+  }
+})
+```
+
+# Scripts
+Add these to package.json:
+```json
+{
+  "scripts": {
+    "test": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:ui": "vitest --ui",
+    "test:watch": "vitest watch"
+  }
+}
+```
+```

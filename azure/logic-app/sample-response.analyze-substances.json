@@ -1,0 +1,25 @@
+{
+  "success": true,
+  "data": {
+    "total_count": 1,
+    "image_description": "Foto van een chemisch productetiket.",
+    "ai_model": "azure-ai-foundry-agent",
+    "extraction_timestamp": "2026-07-08T12:00:00.000Z",
+    "substances": [
+      {
+        "id": "1",
+        "name": "Voorbeeldstof",
+        "adr_class": "3",
+        "packaging_group": "VP II",
+        "quantity": 25,
+        "unit": "liter",
+        "specific_gravity": 0.85,
+        "number_of_items": 1,
+        "ghs_pictograms": ["GHS02"],
+        "confidence": 0.9,
+        "pictogram_confidence": 0.8,
+        "ai_reasoning": "Voorbeeldrespons voor frontendcontract."
+      }
+    ]
+  }
+}
